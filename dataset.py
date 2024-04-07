@@ -69,32 +69,6 @@ class MMDataset(Dataset):
     def __init_sims(self):
         return self.__init_mosi()
 
-    # def __truncated(self):
-    #     # NOTE: Here for dataset we manually cut the input into specific length.
-    #     def Truncated(modal_features, length):
-    #         if length == modal_features.shape[1]:
-    #             return modal_features
-    #         truncated_feature = []
-    #         padding = np.array([0 for i in range(modal_features.shape[2])])
-    #         for instance in modal_features:
-    #             for index in range(modal_features.shape[1]):
-    #                 if((instance[index] == padding).all()):
-    #                     if(index + length >= modal_features.shape[1]):
-    #                         truncated_feature.append(instance[index:index+length])
-    #                         break
-    #                 else:                        
-    #                     truncated_feature.append(instance[index:index+length])
-    #                     break
-    #         truncated_feature = np.array(truncated_feature)
-    #         return truncated_feature
-                       
-    #     text_length, audio_length, video_length = self.args.seq_lens
-
-    #     audio_length, video_length =[50,50] 
-    #     self.vision = Truncated(self.vision, video_length)
-    #     # self.text = Truncated(self.text, text_length)
-    #     self.audio = Truncated(self.audio, audio_length)
-
     def __len__(self):
         return len(self.labels['M'])
 
@@ -117,9 +91,6 @@ class MMDataset(Dataset):
             'id': self.ids[index],
             'labels': {k: torch.Tensor(v[index].reshape(-1)) for k, v in self.labels.items()}
         } 
-        # if not self.args.need_data_aligned:
-        #     sample['audio_lengths'] = self.audio_lengths[index]
-        #     sample['vision_lengths'] = self.vision_lengths[index]
         return sample
 
 
@@ -143,22 +114,3 @@ def MMDataLoader(args):
     }
     
     return dataLoader
-# from config import *
-# args = get_args()
-# dataloader = MMDataLoader(args)
-
-# train_loader = dataloader['train']
-
-# for i, data in enumerate(train_loader):
-#     if i == 0:
-#         print(data['vision'].shape)
-#         print(data['audio'].shape)
-#         print(data['text'].shape)
-#         print(data['labels']['M'].shape)
-#         vision = data['vision'][0,:,0]
-#         audio = data['audio'][0,:,0]
-#         text = data['text'][0]
-#         print(vision)
-#         print(audio)
-#         print(text)
-

@@ -428,10 +428,6 @@ class XBertLayer(nn.Module):
             past_key_value=self_attn_past_key_value,
         )
         attention_output = self_attention_outputs[0]
-        # adapter_change = self.adapter(x=attention_output)
-        # adapter_change_v = self.adapter_vision(x=attention_output, mm=vision)
-        # adapter_change_a = self.adapter_audio(x=attention_output, mm=audio)
-        # adapter_change = self.adapter(x=attention_output)
         #-----------------------------adapter_change------------------------------#
         topK=self.TopK
         N=self.num_experts
@@ -447,58 +443,19 @@ class XBertLayer(nn.Module):
         weights = F.softmax(weights, dim=1, dtype=torch.float).to(attention_output.dtype)
         results = torch.zeros_like(attention_output)
 
-
-        # vision_experts = nn.ModuleList([self.adapter_vision_1,self.adapter_vision_2,])
-        # audio_experts = nn.ModuleList([self.adapter_audio_1,self.adapter_audio_2,])
-        # text_experts = nn.ModuleList([self.adapter_1,self.adapter_2,])
-        # gate_text = gate_logits[:,:2]
-        # gate_audio = gate_logits[:,2:4]
-        # gate_vision = gate_logits[:,4:]
-        # weights_text, selected_expert_text = torch.topk(gate_text, 1)
-        # weights_audio, selected_expert_audio = torch.topk(gate_audio, 1)
-        # weights_vision, selected_expert_vision = torch.topk(gate_vision, 1)
-        # weights = F.softmax(torch.concatenate([weights_text, weights_audio, weights_vision], dim=-1), dim=1, dtype=torch.float).to(attention_output.dtype)
-        # # print(weights.shape)
-        # weights_text = weights[:,0].unsqueeze(-1)
-        # weights_audio = weights[:,1].unsqueeze(-1)
-        # weights_vision = weights[:,2].unsqueeze(-1)
-        # for i, expert in enumerate(text_experts):
-        #     batch_idx, nth_expert = torch.where(selected_expert_text == i)
-        #     expert_output = expert(attention_output[batch_idx])
-        #     results[batch_idx] += weights_text[batch_idx, nth_expert, None] * expert_output
-
-        # for i, expert in enumerate(audio_experts):    
-        #     batch_idx, nth_expert = torch.where(selected_expert_audio == i)
-        #     expert_output = expert(attention_output[batch_idx], audio[batch_idx])
-        #     results[batch_idx] += weights_audio[batch_idx, nth_expert, None] * expert_output
-
-        # for i, expert in enumerate(vision_experts):    
-        #     batch_idx, nth_expert = torch.where(selected_expert_vision == i)
-        #     expert_output = expert(attention_output[batch_idx], vision[batch_idx])
-        #     # print(weights_vision.shape)
-        #     change = weights_vision[batch_idx, nth_expert, None] 
-        #     results[batch_idx] += change* expert_output
-        # experts = nn.ModuleList([self.adapter_1,self.adapter_2,self.adapter_audio_1,self.adapter_audio_2,self.adapter_vision_1,self.adapter_vision_2])
-        # # experts = nn.ModuleList([self.adapter_1,self.adapter_audio_1,self.adapter_vision_1,])
         experts = nn.ModuleList([self.adapter_1, self.adapter_2,
                                  self.adapter_audio_1, self.adapter_audio_2,
                                  self.adapter_vision_1, self.adapter_vision_2,
                                  ])
-        # # experts = nn.ModuleList([self.adapter_1,self.adapter_2,self.adapter_3,self.adapter_4,self.adapter_audio_1,self.adapter_audio_2,self.adapter_audio_3,self.adapter_audio_4,
-        # #                         #  self.adapter_vision_1,self.adapter_vision_2,self.adapter_vision_3,self.adapter_vision_4])
         f = torch.zeros(N)
         P = torch.zeros(N)
         for i, expert in enumerate(experts):
-            # 负载均衡
-            # 分配给这个专家的 token 数量
+           
             f[i] = torch.sum(selected_experts == i).item() / T
-            # 分配给这个专家的路由概率和
             P[i] = torch.sum(gate_p[:,i]) / T
             batch_idx, nth_expert = torch.where(selected_experts == i)
             if i==0 or i==1:
-            # if i==0:
                 expert_output = expert(attention_output[batch_idx])
-            # elif i==1:
             elif i==2 or i==3:
                 expert_output = expert(attention_output[batch_idx],audio[batch_idx])
             else:
@@ -506,13 +463,6 @@ class XBertLayer(nn.Module):
             results[batch_idx] += weights[batch_idx, nth_expert, None] * expert_output
         attention_output = attention_output.reshape(batch_size, sequence_length, hidden_dim)
         results = results.reshape(batch_size, sequence_length, hidden_dim)
-        # scalar = self.alpha / math.sqrt(self.rank)
-        # results = self.alpha / math.sqrt(self.rank) * results
-        # cre = Load_Balancing_loss()
-        # LBLoss = cre(f, P)
-        # print(LBLoss)
-
-        
         #------------------------------adapter_change------------------------------#
 
         outputs = self_attention_outputs[1:]  # add self attentions if we output attention weights
@@ -554,7 +504,6 @@ class BertEncoder(nn.Module):
         vision: Optional[bool] = None,
         audio: Optional[bool] = None,
     ) -> Union[Tuple[torch.Tensor], BaseModelOutputWithPastAndCrossAttentions]:
-        # Load = torch.zeros([12,6],dtype=torch.float) # 层数, 专家数
         all_hidden_states = () if output_hidden_states else None
         all_self_attentions = () if output_attentions else None
         all_cross_attentions = () if output_attentions and self.config.add_cross_attention else None
@@ -602,8 +551,6 @@ class BertEncoder(nn.Module):
                     vision=vision,
                     audio=audio,
                 )
-            # print(LBloss_layer)
-            # Load[i,:] = load_layer
 
             hidden_states = layer_outputs[0]
             if use_cache:
@@ -612,13 +559,9 @@ class BertEncoder(nn.Module):
                 all_self_attentions = all_self_attentions + (layer_outputs[1],)
                 if self.config.add_cross_attention:
                     all_cross_attentions = all_cross_attentions + (layer_outputs[2],)
-        # 最后一层不加parallel adapters
-        # layer_outputs = self.last_layer(hidden_states, attention_mask)
-        # hidden_states = layer_outputs[0]
+
         if output_hidden_states:
             all_hidden_states = all_hidden_states + (hidden_states,)
-        # print(Load[1,:])
-        # if not return_dict:
         return tuple(
             v
             for v in [

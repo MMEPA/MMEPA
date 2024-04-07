@@ -12,8 +12,6 @@ import torch.nn as nn
 # path to a pretrained word embedding file
 word_emb_path = '/home/henry/glove/glove.840B.300d.txt'
 assert(word_emb_path is not None)  # Python assert（断言）用于判断一个表达式，在表达式条件为 false 的时候触发异常。
-MOSI_path = '/data1/kezhou/code/dataset/MOSI/aligned_50.pkl'
-MOSEI_path = '/data1/kezhou/code/dataset/MOSEI/MOSEI_aligned_50.pkl'
 username = Path.home().name
 # .name用于提取文件名。Path.home()用于提取主文件目录。此文件中为/home/kezhou。
 # username为kezhou
@@ -48,7 +46,9 @@ def get_args():  # 获取参数。argparse是命令行解析模块。
     # Dataset
     parser.add_argument('--dataset', type=str, default='mosi', choices=['mosi','mosei'],
                         help='dataset to use (default: mosi)')
-    parser.add_argument('--data_path', type=str, default=MOSI_path,
+    parser.add_argument('--data_path', type=str,
+                        help='path for storing the dataset')
+    parser.add_argument('--bert_path', type=str, default='bert-base-uncased',
                         help='path for storing the dataset')
     # Dropouts
     parser.add_argument('--dropout_prj', type=float, default=0.1,
@@ -61,6 +61,7 @@ def get_args():  # 获取参数。argparse是命令行解析模块。
     parser.add_argument('--TopK', type=int, default=3, help='K')
     # parser.add_argument('--bottleneck', type=int, default=64, help='bottleneck of parallel adapters')
     parser.add_argument('--rank', type=int, default=64, help='rank of parallel adapters')
+    parser.add_argument('--lora_rank', type=int, default=32, help='rank of lora')
 
     # Training Setting
     parser.add_argument('--batch_size', type=int, default=128, metavar='N',
@@ -87,7 +88,7 @@ def get_args():  # 获取参数。argparse是命令行解析模块。
                         help='audio feature dim')
     parser.add_argument('--vision_dim', type=int, default=20,
                         help='vision feature dim')
-    parser.add_argument('--num_epochs', type=int, default=20,  # 最大epoch 数量
+    parser.add_argument('--num_epochs', type=int, default=20,  
                         help='number of epochs (default: 20)')
     parser.add_argument('--patience', type=int, default=10,
                         help='when to stop training if best never change')
@@ -99,8 +100,8 @@ def get_args():  # 获取参数。argparse是命令行解析模块。
     # Logistics
     parser.add_argument('--log_interval', type=int, default=100,
                         help='frequency of result logging (default: 100)')
-    parser.add_argument('--seed', type=int, default=7777,  # 77777,
-                        help='random seed')  # 7777
+    parser.add_argument('--seed', type=int, default=7777,  
+                        help='random seed')
     
     args = parser.parse_args()
     return args
@@ -119,7 +120,7 @@ def str2bool(v):
 class Config(object):
     def __init__(self, data, mode='train'):
         """Configuration Class: set kwargs as class attributes with setattr"""
-        self.dataset_dir = data_dict[data.lower()]  # 键为数据集名称，value为数据集路径
+        self.dataset_dir = data_dict[data.lower()]
         self.sdk_dir = sdk_dir
         self.mode = mode
         # Glove path
@@ -132,8 +133,6 @@ class Config(object):
         """Pretty-print configurations in alphabetical order"""
         config_str = 'Configurations\n'
         config_str += pprint.pformat(self.__dict__)
-        #  pprint.pformat()函数将返回同样的文本字符串，但不是打印它。
-        # 这个字符串不仅是易于阅读的格式，同时也是语法上正确的 Python 代码。
         return config_str
 
 

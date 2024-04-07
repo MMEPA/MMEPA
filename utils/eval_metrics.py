@@ -13,8 +13,7 @@ def multiclass_acc(preds, truths):
     :return: Classification accuracy
     """
     return np.sum(np.round(preds) == np.round(truths)) / float(len(truths))
-    # np.round(数据, decimal=保留的小数位数). 原则：对于浮点型数据，四舍六入，正好一半取偶数。
-
+    
 
 def weighted_accuracy(test_preds_emo, test_truth_emo):
     true_label = (test_truth_emo > 0)
@@ -28,23 +27,18 @@ def weighted_accuracy(test_preds_emo, test_truth_emo):
 
 def eval_mosei_senti(results, truths, exclude_zero=False):
     test_preds = results.view(-1).cpu().detach().numpy()
-    # .view()表示重组维度。参数为-1表示维度推断。
-    # .cpu()将数据的处理设备从其他设备, 如.cuda()拿到cpu上, 不会改变变量类型, 转换后仍然是Tensor变量。
-    # .detach()返回一个新的tensor，从当前计算图中分离下来。但是仍指向原变量的存放位置，不同之处只是requirse_grad为false.
-    # 得到的这个tensir永远不需要计算器梯度，不具有grad.
-    # 使用detach返回的tensor和原始的tensor共同一个内存，即一个修改另一个也会跟着改变
-    # .numpy()将Tensor变量转换为ndarray变量.
+
     test_truth = truths.view(-1).cpu().detach().numpy()
 
-    non_zeros = np.array([i for i, e in enumerate(test_truth) if e != 0])  # 非0值的test_truth索引
+    non_zeros = np.array([i for i, e in enumerate(test_truth) if e != 0]) 
 
-    test_preds_a7 = np.clip(test_preds, a_min=-3., a_max=3.)  # 进行裁剪, 让值限定在-3~ +3
+    test_preds_a7 = np.clip(test_preds, a_min=-3., a_max=3.) 
     test_truth_a7 = np.clip(test_truth, a_min=-3., a_max=3.)
     test_preds_a5 = np.clip(test_preds, a_min=-2., a_max=2.)
     test_truth_a5 = np.clip(test_truth, a_min=-2., a_max=2.)
 
-    mae = np.mean(np.absolute(test_preds - test_truth))   # Average L1 distance between preds and truths
-    corr = np.corrcoef(test_preds, test_truth)[0][1]  # 皮尔逊乘积矩阵
+    mae = np.mean(np.absolute(test_preds - test_truth))   
+    corr = np.corrcoef(test_preds, test_truth)[0][1]  
     mult_a7 = multiclass_acc(test_preds_a7, test_truth_a7)
     mult_a5 = multiclass_acc(test_preds_a5, test_truth_a5)
 

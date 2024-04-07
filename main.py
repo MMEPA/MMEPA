@@ -19,12 +19,11 @@ logging.getLogger ().setLevel(logging.INFO)
 logging.basicConfig(level=logging.INFO, filename='MMEPA.log')
 
 def set_seed(seed):
-    torch.set_default_tensor_type('torch.FloatTensor')  # 设置默认的CPU tensor类型
-    torch.manual_seed(seed)  # 设置CPU生成随机数的种子，方便下次复现实验结果。
-    # 设置随机种子后，是每次运行文件的输出结果都一样，但不是每次随机函数生成的结果一样。
-    if torch.cuda.is_available():  # GPU是否可用
-        torch.cuda.manual_seed_all(seed)  # # 设置CPU生成随机数的种子
-        torch.set_default_tensor_type('torch.cuda.FloatTensor')  # 设置默认的GPU tensor类型
+    torch.set_default_tensor_type('torch.FloatTensor') 
+    torch.manual_seed(seed)  
+    if torch.cuda.is_available():  
+        torch.cuda.manual_seed_all(seed) 
+        torch.set_default_tensor_type('torch.cuda.FloatTensor')  
         torch.backends.cudnn.deterministic = True 
         torch.backends.cudnn.benchmark = False  
 
@@ -32,7 +31,7 @@ def set_seed(seed):
 
 if __name__ == '__main__':
     args = get_args()
-    dataset = str.lower(args.dataset.strip())  # strip() 方法用于移除字符串头尾指定的字符（默认为空格或换行符）或字符序列
+    dataset = str.lower(args.dataset.strip())  
     
     set_seed(args.seed)
     print("Start loading the data....")
