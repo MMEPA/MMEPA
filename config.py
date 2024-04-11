@@ -10,15 +10,13 @@ from torch import optim
 import torch.nn as nn
 
 # path to a pretrained word embedding file
-word_emb_path = '/home/henry/glove/glove.840B.300d.txt'
-assert(word_emb_path is not None)  # Python assert（断言）用于判断一个表达式，在表达式条件为 false 的时候触发异常。
+word_emb_path = ''
+assert(word_emb_path is not None)
 username = Path.home().name
-# .name用于提取文件名。Path.home()用于提取主文件目录。此文件中为/home/kezhou。
-# username为kezhou
+
 
 project_dir = Path(__file__).resolve().parent.parent
-# /data1/kezhou/MSA/my_MMIM/Multimodal-Infomax
-# .parent用于提取父文件路径
+
 
 sdk_dir = project_dir.joinpath('CMU-MultimodalSDK')
 data_dir = project_dir.joinpath('datasets')
@@ -34,13 +32,13 @@ output_dim_dict = {
     'mosei_senti': 1,
 }
 
-criterion_dict = {  # 标准
+criterion_dict = { 
     'mosi': 'L1Loss',
     'iemocap': 'CrossEntropyLoss',
     'ur_funny': 'CrossEntropyLoss'
 }
 
-def get_args():  # 获取参数。argparse是命令行解析模块。
+def get_args():
     parser = argparse.ArgumentParser(description='Multimodal Sentiment Analysis')
 
     # Dataset
