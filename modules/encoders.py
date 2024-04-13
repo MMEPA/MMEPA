@@ -95,7 +95,6 @@ class PositionalEncoding(nn.Module):
 
 
 class TransformerEncoder(nn.Module):
-    "Transformer 编码器, 用于提取visual 和audio 特征"
     def __init__(self, ninp=300, nhead=4, nhid=128, nlayers=3, dropout=0.5):
         super().__init__()
         from torch.nn import TransformerEncoder, TransformerEncoderLayer
@@ -115,12 +114,12 @@ class TransformerEncoder(nn.Module):
         '''
 
         # mask num_of_sens x max_lenth
-        mask = torch.ones(src.size(1), src.size(0)) == 1  # 全部初始化为 True
+        mask = torch.ones(src.size(1), src.size(0)) == 1  
         # batch_size, seq_length
         for i in range(len(lenths)):# batch_size
             lenth = lenths[i]
             for j in range(lenth): 
-                mask[i][j] = False  # 设置前面的部分为False
+                mask[i][j] = False  
 
         return mask
 
